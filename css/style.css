@@ -136,3 +136,92 @@ footer {
 [role="button"] {
     cursor: pointer;
 }
+
+/* ============================================================
+   GUIDANCE INDICATOR - Indikator "Geser Sedikit Lagi"
+   ============================================================ */
+
+/* Container panduan */
+#guidanceBox {
+    transition: all 0.4s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Variasi warna berdasarkan severity */
+#guidanceBox.severity-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+    border-color: #28a745 !important;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.2);
+}
+
+#guidanceBox.severity-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+    border-color: #17a2b8 !important;
+}
+
+#guidanceBox.severity-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%) !important;
+    border-color: #ffc107 !important;
+}
+
+#guidanceBox.severity-secondary {
+    background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%) !important;
+    border-color: #6c757d !important;
+}
+
+#guidanceBox.severity-unknown {
+    background: #f8f9fa !important;
+    border-color: #dee2e6 !important;
+}
+
+/* Progress bar */
+#guidanceProgressBar {
+    transition: width 0.5s ease, background-color 0.5s ease;
+}
+
+/* Animasi panah panduan */
+#guidanceArrow {
+    animation: bounceHorizontal 1s infinite;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes bounceHorizontal {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(8px);
+    }
+}
+
+/* Animasi pulse untuk status success */
+#guidanceBox.severity-success #guidanceIcon {
+    animation: pulseSuccess 2s infinite;
+}
+
+@keyframes pulseSuccess {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    #guidanceBox {
+        padding: 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+    
+    #guidanceIcon {
+        font-size: 1.5rem !important;
+    }
+    
+    #guidanceText {
+        font-size: 0.9rem;
+    }
+}
