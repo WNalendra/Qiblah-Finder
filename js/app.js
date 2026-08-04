@@ -58,6 +58,19 @@ const LOCATION_STATUS = {
  */
 const ARROW_TRANSITION = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
 
+/**
+ * Toleransi selisih sudut (dalam derajat) agar dianggap "Tepat" menghadap kiblat
+ */
+const QIBLA_TOLERANCE = 5;
+
+/**
+ * Status indikator kesejajaran kiblat
+ */
+const QIBLA_STATUS = {
+  ALIGNED: "aligned",
+  NOT_ALIGNED: "not-aligned",
+};
+
 // ==================== DOM REFERENCES ====================
 
 /**
@@ -72,6 +85,7 @@ const DOM = {
   sensorBadge: document.getElementById("sensorBadge"),
   kiblatDegree: document.getElementById("kiblatDegree"),
   kiblatArrow: document.getElementById("kiblatArrow"),
+  qiblaStatus: document.getElementById("qiblaStatus"),
 };
 
 // ==================== STATE MANAGEMENT ====================
@@ -220,6 +234,37 @@ function updateCompassArrow(rotation) {
 }
 
 /**
+ * Memperbarui indikator status kesejajaran kiblat
+ * Hanya bertugas mengubah tulisan dan warna (class) status.
+ * Tidak melakukan perhitungan sudut apa pun di sini.
+ *
+ * @param {boolean|null} isAligned - true jika sudah tepat menghadap kiblat,
+ *                                    false jika belum, null jika data belum tersedia
+ */
+function updateQiblaStatus(isAligned) {
+  if (!DOM.qiblaStatus) return;
+
+  // Reset kelas status sebelumnya
+  DOM.qiblaStatus.classList.remove(
+    QIBLA_STATUS.ALIGNED,
+    QIBLA_STATUS.NOT_ALIGNED,
+  );
+
+  if (isAligned === null) {
+    DOM.qiblaStatus.textContent = "";
+    return;
+  }
+
+  if (isAligned) {
+    DOM.qiblaStatus.textContent = "🟢 Tepat";
+    DOM.qiblaStatus.classList.add(QIBLA_STATUS.ALIGNED);
+  } else {
+    DOM.qiblaStatus.textContent = "🔴 Belum Menghadap Kiblat";
+    DOM.qiblaStatus.classList.add(QIBLA_STATUS.NOT_ALIGNED);
+  }
+}
+
+/**
  * Mereset seluruh UI ke kondisi awal
  */
 function resetUI() {
@@ -228,6 +273,7 @@ function resetUI() {
   updateCoordinates(null, null);
   updateQiblaDirection(null);
   updateCompassArrow(0);
+  updateQiblaStatus(null);
 }
 
 /**
@@ -266,6 +312,7 @@ function setErrorState(errorMessage) {
   updateCoordinates(null, null);
   updateQiblaDirection(null);
   updateCompassArrow(0);
+  updateQiblaStatus(null);
 }
 
 // ==================== BUSINESS LOGIC ====================
@@ -305,6 +352,28 @@ function calculateArrowRotation(qiblaDirection, heading) {
 }
 
 /**
+ * Menghitung selisih sudut terkecil (minimum) antara dua sudut
+ * Sudut bersifat melingkar (0°-360°), sehingga selisih dihitung
+ * dengan mempertimbangkan jarak terpendek melintasi titik 0°/360°.
+ *
+ * Formula:
+ * diff = |a - b| % 360
+ * hasil = diff > 180 ? 360 - diff : diff
+ *
+ * @example
+ * getAngleDifference(359, 2)  // returns 3, bukan 357
+ * getAngleDifference(10, 350) // returns 20
+ *
+ * @param {number} angleA - Sudut pertama dalam derajat (0-360)
+ * @param {number} angleB - Sudut kedua dalam derajat (0-360)
+ * @returns {number} Selisih sudut terkecil dalam derajat (0-180)
+ */
+function getAngleDifference(angleA, angleB) {
+  const rawDifference = Math.abs(angleA - angleB) % 360;
+  return rawDifference > 180 ? 360 - rawDifference : rawDifference;
+}
+
+/**
  * Handler untuk data heading dari kompas
  * Dipanggil setiap kali sensor kompas memberikan data baru
  *
@@ -336,6 +405,17 @@ function handleCompassData(data) {
 
   // Perbarui posisi panah kompas
   updateCompassArrow(rotation);
+
+  // Hitung selisih sudut terkecil antara heading dan arah kiblat,
+  // lalu tentukan apakah sudah berada dalam toleransi
+  const angleDifference = getAngleDifference(
+    data.heading,
+    AppState.qiblaDirection,
+  );
+  const isAligned = angleDifference <= QIBLA_TOLERANCE;
+
+  // Perbarui indikator status kesejajaran kiblat
+  updateQiblaStatus(isAligned);
 }
 
 /**
@@ -644,4 +724,6 @@ export {
   cleanupCompass,
   updateCompassArrow,
   calculateArrowRotation,
+  getAngleDifference,
+  updateQiblaStatus,
 };
