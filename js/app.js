@@ -647,16 +647,29 @@ function updateHeadingDisplay(heading) {
 /**
  * Update indikator kiblat (warna hijau/abu-abu)
  */
+/**
+ * Update indikator kiblat (warna hijau/abu-abu) dan efek panah
+ */
 function updateQiblaIndicator(qiblaData) {
-    if (!DOM.qiblaIndicator) return;
+    if (!DOM.qiblaIndicator || !DOM.qiblaArrow) return;
+
+    // Reset class
+    DOM.qiblaArrow.classList.remove('near-qibla', 'facing-qibla');
 
     if (qiblaData && qiblaData.isFacingQibla) {
         DOM.qiblaIndicator.classList.add('qibla-indicator--active');
+        DOM.qiblaArrow.classList.add('facing-qibla');
+    } else if (qiblaData && qiblaData.guidance) {
+        DOM.qiblaIndicator.classList.remove('qibla-indicator--active');
+        
+        // Jika selisih ≤ 10°, beri efek "hampir"
+        if (qiblaData.guidance.absDifference <= 10) {
+            DOM.qiblaArrow.classList.add('near-qibla');
+        }
     } else {
         DOM.qiblaIndicator.classList.remove('qibla-indicator--active');
     }
 }
-
 /**
  * Update Card Status Sensor
  */
