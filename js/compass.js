@@ -256,7 +256,7 @@ function extractHeading(event, isAbsolute = false) {
   // Catatan: Pada deviceorientation biasa, alpha dihitung relatif terhadap
   // orientasi awal perangkat. Pada deviceorientationabsolute, alpha
   // dihitung relatif terhadap Utara Bumi.
-  if (event.alpha != null && !isNaN(event.alpha)) {
+  if (360 - event.alpha != null && !isNaN(event.alpha)) {
     // Pada orientasi absolut, alpha = 0 berarti Utara
     // Pada orientasi standar, alpha perlu dikonversi
     if (isAbsolute) {
