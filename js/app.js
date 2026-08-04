@@ -509,7 +509,91 @@ function updateIndicatorPosition() {
 // ============================================================
 // UI UPDATE FUNCTIONS
 // ============================================================
+/**
+ * 🆕 Update indikator panduan "Geser Sedikit Lagi"
+ * @param {object} guidance - Object guidance dari qiblaData
+ */
+function updateGuidanceUI(guidance) {
+    const guidanceBox = document.getElementById('guidanceBox');
+    const guidanceIcon = document.getElementById('guidanceIcon');
+    const guidanceText = document.getElementById('guidanceText');
+    const guidanceDetail = document.getElementById('guidanceDetail');
+    const guidanceProgressBar = document.getElementById('guidanceProgressBar');
+    const guidanceArrow = document.getElementById('guidanceArrow');
 
+    if (!guidanceBox || !guidance) return;
+
+    // Hapus semua class severity
+    guidanceBox.classList.remove('severity-success', 'severity-info', 'severity-warning', 'severity-secondary', 'severity-unknown');
+    
+    // Tambahkan class severity baru
+    guidanceBox.classList.add(`severity-${guidance.severity}`);
+
+    // Update icon
+    if (guidanceIcon) {
+        guidanceIcon.textContent = guidance.icon || '📡';
+    }
+
+    // Update teks utama
+    if (guidanceText) {
+        guidanceText.textContent = guidance.text || 'Menunggu Sensor...';
+    }
+
+    // Update progress bar
+    if (guidanceProgressBar) {
+        const percentage = guidance.percentage || 0;
+        guidanceProgressBar.style.width = `${percentage}%`;
+        guidanceProgressBar.setAttribute('aria-valuenow', percentage);
+
+        // Warna progress bar sesuai severity
+        guidanceProgressBar.classList.remove('bg-success', 'bg-info', 'bg-warning', 'bg-secondary');
+        switch (guidance.severity) {
+            case 'success':
+                guidanceProgressBar.classList.add('bg-success');
+                break;
+            case 'info':
+                guidanceProgressBar.classList.add('bg-info');
+                break;
+            case 'warning':
+                guidanceProgressBar.classList.add('bg-warning');
+                break;
+            default:
+                guidanceProgressBar.classList.add('bg-secondary');
+                break;
+        }
+    }
+
+    // Update detail
+    if (guidanceDetail) {
+        if (guidance.severity === 'success') {
+            guidanceDetail.textContent = '✅ HP sudah menghadap ke arah Ka\'bah';
+        } else if (guidance.absDifference !== undefined) {
+            const directionText = guidance.direction === 'right' ? 'kanan' : 'kiri';
+            guidanceDetail.textContent = `↗️ Putar HP ke ${directionText} sejauh ${guidance.absDifference}°`;
+        } else {
+            guidanceDetail.textContent = 'Nyalakan GPS dan sensor kompas';
+        }
+    }
+
+    // Update panah arah
+    if (guidanceArrow) {
+        if (guidance.severity === 'success') {
+            guidanceArrow.style.display = 'none';
+        } else if (guidance.direction) {
+            guidanceArrow.style.display = 'block';
+            guidanceArrow.textContent = guidance.direction === 'right' ? '👉' : '👈';
+            
+            // Flip animasi jika ke kiri
+            if (guidance.direction === 'left') {
+                guidanceArrow.style.animation = 'bounceHorizontalReverse 1s infinite';
+            } else {
+                guidanceArrow.style.animation = 'bounceHorizontal 1s infinite';
+            }
+        } else {
+            guidanceArrow.style.display = 'none';
+        }
+    }
+}
 /**
  * Update semua elemen UI
  */
