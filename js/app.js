@@ -391,7 +391,6 @@ async function handleRefreshLocation() {
 
 /**
  * Handler untuk update heading dari sensor
- * Dipanggil setiap kali sensor kompas mengirim data baru
  */
 function handleHeadingUpdate(heading) {
     if (heading === null || isNaN(heading)) return;
@@ -399,13 +398,8 @@ function handleHeadingUpdate(heading) {
     AppState.deviceHeading = heading;
     AppState.compassReady = true;
 
-    // Hitung target rotasi
-    // Background berputar berlawanan dengan heading
-    // Saat heading 0 (utara), background rotation 0
-    // Saat heading 90 (timur), background rotation -90
     AppState.targetCompassRotation = -heading;
 
-    // Hitung data kiblat jika GPS sudah siap
     if (AppState.gpsReady && AppState.userPosition) {
         const qiblaData = calculateQiblaData(
             AppState.userPosition.latitude,
@@ -415,20 +409,16 @@ function handleHeadingUpdate(heading) {
 
         if (qiblaData && qiblaData.isValid) {
             AppState.qiblaData = qiblaData;
-
-            // Target rotasi panah: panah selalu menunjuk bearing kiblat absolut
             AppState.targetArrowRotation = qiblaData.arrowRotation;
 
-            // Update UI informasi kiblat setiap kali heading berubah
             updateQiblaInfoUI(qiblaData);
             updateQiblaIndicator(qiblaData);
+            updateGuidanceUI(qiblaData.guidance);  // 🆕 Panggil fungsi panduan
         }
     }
 
-    // Update tampilan heading
     updateHeadingDisplay(heading);
 }
-
 // ============================================================
 // ANIMATION LOOP
 // ============================================================
