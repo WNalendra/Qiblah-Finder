@@ -254,18 +254,17 @@ function extractHeading(event, isAbsolute = false) {
 
   // Prioritas 2: event.alpha (standar W3C)
   // Catatan: Pada deviceorientation biasa, alpha dihitung relatif terhadap
-  // orientasi awal perangkat. Pada deviceorientationabsolute, alpha
-  // dihitung relatif terhadap Utara Bumi.
-  if (360 - event.alpha != null && !isNaN(event.alpha)) {
-    // Pada orientasi absolut, alpha = 0 berarti Utara
-    // Pada orientasi standar, alpha perlu dikonversi
+  // orientasi awal perangkat, dan arah putarannya BERLAWANAN dengan arah
+  // kompas (alpha bertambah berlawanan arah jarum jam, sedangkan heading
+  // kompas bertambah searah jarum jam). Pada deviceorientationabsolute,
+  // alpha = 0 sudah berarti Utara searah jarum jam, jadi tidak perlu dibalik.
+  if (event.alpha != null && !isNaN(event.alpha)) {
     if (isAbsolute) {
       // Orientasi absolut: 0 = Utara, nilai bertambah searah jarum jam
       return normalizeHeading(event.alpha);
     } else {
-      // Orientasi standar: alpha bisa bervariasi
-      // Tetap gunakan alpha sebagai heading (beberapa browser sudah benar)
-      return normalizeHeading(event.alpha);
+      // Orientasi standar: konversi ke heading kompas dengan membalik arah
+      return normalizeHeading(360 - event.alpha);
     }
   }
 
