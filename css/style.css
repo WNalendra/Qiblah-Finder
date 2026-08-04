@@ -225,3 +225,13 @@ footer {
         font-size: 0.9rem;
     }
 }
+
+/* Animasi panah ke kiri */
+@keyframes bounceHorizontalReverse {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(-8px);
+    }
+}
