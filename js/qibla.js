@@ -1,5 +1,6 @@
 // ============================================================
 // QIBLA.JS - Modul Perhitungan Arah Kiblat & Jarak
+// Update: Tambah fungsi panduan arah
 // ============================================================
 
 import { toRadians, toDegrees, normalizeAngle, shortestAngleDifference, formatNumber } from './utils.js';
@@ -25,31 +26,23 @@ const KAABAH = {
  * @returns {number} Bearing dalam derajat (0-360)
  */
 export function calculateBearing(lat1, lon1, lat2, lon2) {
-    // Validasi input
     if (lat1 === null || lon1 === null || lat2 === null || lon2 === null ||
         isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
         console.error('❌ calculateBearing: Input tidak valid', { lat1, lon1, lat2, lon2 });
         return null;
     }
 
-    // Konversi ke radian
     const φ1 = toRadians(lat1);
     const φ2 = toRadians(lat2);
     const λ1 = toRadians(lon1);
     const λ2 = toRadians(lon2);
-
-    // Selisih longitude
     const Δλ = λ2 - λ1;
 
-    // Rumus initial bearing
     const y = Math.sin(Δλ) * Math.cos(φ2);
     const x = Math.cos(φ1) * Math.sin(φ2) -
               Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
 
-    // atan2 menghasilkan sudut dalam radian
     const θ = Math.atan2(y, x);
-
-    // Konversi ke derajat dan normalisasi ke 0-360
     const bearing = normalizeAngle(toDegrees(θ));
 
     return bearing;
@@ -68,20 +61,12 @@ export function getQiblaBearing(userLat, userLon) {
     }
 
     const bearing = calculateBearing(userLat, userLon, KAABAH.latitude, KAABAH.longitude);
-
     console.log(`🕋 Bearing Kiblat: ${bearing?.toFixed(2)}° (dari ${userLat.toFixed(4)}, ${userLon.toFixed(4)})`);
-
     return bearing;
 }
 
 /**
  * Menghitung jarak antara dua titik menggunakan rumus Haversine
- *
- * Formula Haversine:
- * a = sin²(Δφ/2) + cos(φ1) * cos(φ2) * sin²(Δλ/2)
- * c = 2 * atan2(√a, √(1-a))
- * d = R * c
- *
  * @param {number} lat1 - Latitude titik 1 (derajat)
  * @param {number} lon1 - Longitude titik 1 (derajat)
  * @param {number} lat2 - Latitude titik 2 (derajat)
@@ -89,30 +74,24 @@ export function getQiblaBearing(userLat, userLon) {
  * @returns {number} Jarak dalam kilometer
  */
 export function calculateDistance(lat1, lon1, lat2, lon2) {
-    // Validasi input
     if (lat1 === null || lon1 === null || lat2 === null || lon2 === null ||
         isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
         console.error('❌ calculateDistance: Input tidak valid');
         return null;
     }
 
-    // Radius bumi dalam kilometer (rata-rata)
-    const R = 6371;
+    const R = 6371; // Radius bumi dalam kilometer
 
-    // Konversi ke radian
     const φ1 = toRadians(lat1);
     const φ2 = toRadians(lat2);
     const Δφ = toRadians(lat2 - lat1);
     const Δλ = toRadians(lon2 - lon1);
 
-    // Rumus Haversine
     const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
               Math.cos(φ1) * Math.cos(φ2) *
               Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    // Jarak dalam kilometer
     const distance = R * c;
 
     return distance;
@@ -131,9 +110,7 @@ export function getDistanceToKaabah(userLat, userLon) {
     }
 
     const distance = calculateDistance(userLat, userLon, KAABAH.latitude, KAABAH.longitude);
-
     console.log(`📏 Jarak ke Ka'bah: ${distance?.toFixed(2)} km`);
-
     return distance;
 }
 
@@ -154,9 +131,6 @@ export function getQiblaAngleDifference(deviceHeading, qiblaBearing) {
 
 /**
  * Menghitung rotasi yang diperlukan untuk panah kiblat
- * Panah harus berputar berlawanan dengan heading device
- * agar selalu menunjuk ke arah kiblat
- *
  * @param {number} deviceHeading - Heading perangkat saat ini
  * @param {number} qiblaBearing - Bearing kiblat
  * @returns {number} Sudut rotasi untuk panah (derajat)
@@ -167,17 +141,7 @@ export function getArrowRotation(deviceHeading, qiblaBearing) {
         return 0;
     }
 
-    // Panah harus menunjuk ke arah kiblat relatif terhadap layar
-    // Jika device menghadap utara (heading 0), panah harus menunjuk ke bearing kiblat
-    // Jika device berputar, panah harus menyesuaikan
-
-    // Rotasi panah = qiblaBearing - deviceHeading
-    // Panah selalu "diam" menunjuk kiblat, background yang berputar
-    // Jadi rotasi panah = -deviceHeading + qiblaBearing
-    // Atau: panah dirotasi sehingga tetap menunjuk arah absolut kiblat
-
     const arrowRotation = normalizeAngle(qiblaBearing - deviceHeading);
-
     return arrowRotation;
 }
 
@@ -193,9 +157,74 @@ export function isFacingQibla(angleDifference, threshold = 3) {
         return false;
     }
 
-    // Gunakan nilai absolut selisih
     const absDiff = Math.abs(angleDifference);
     return absDiff <= threshold;
+}
+
+/**
+ * 🆕 Mendapatkan panduan arah berdasarkan selisih sudut
+ * Memberikan instruksi ke pengguna untuk memutar HP
+ * 
+ * @param {number} angleDifference - Selisih sudut antara heading dan kiblat
+ * @returns {object} Object berisi arah, teks panduan, dan persentase kedekatan
+ */
+export function getDirectionGuidance(angleDifference) {
+    if (angleDifference === null || isNaN(angleDifference)) {
+        return {
+            direction: null,
+            text: 'Menunggu data sensor...',
+            percentage: 0,
+            severity: 'unknown'
+        };
+    }
+
+    const absDiff = Math.abs(angleDifference);
+    
+    // Tentukan arah putaran
+    // angleDifference positif = kiblat di sebelah kanan (putar ke kanan)
+    // angleDifference negatif = kiblat di sebelah kiri (putar ke kiri)
+    const direction = angleDifference > 0 ? 'right' : 'left';
+    
+    // Tentukan severity dan teks panduan
+    let severity, text, icon;
+    
+    if (absDiff <= 3) {
+        severity = 'success';
+        text = 'Menghadap Kiblat';
+        icon = '🎯';
+    } else if (absDiff <= 10) {
+        severity = 'info';
+        text = 'Geser Sedikit Lagi';
+        icon = '🤏';
+    } else if (absDiff <= 30) {
+        severity = 'info';
+        text = 'Putar Perlahan';
+        icon = '🔄';
+    } else if (absDiff <= 60) {
+        severity = 'warning';
+        text = 'Putar ke ' + (direction === 'right' ? 'Kanan' : 'Kiri');
+        icon = direction === 'right' ? '👉' : '👈';
+    } else if (absDiff <= 120) {
+        severity = 'warning';
+        text = 'Jauh ke ' + (direction === 'right' ? 'Kanan' : 'Kiri');
+        icon = direction === 'right' ? '👉' : '👈';
+    } else {
+        severity = 'secondary';
+        text = 'Berputar ke ' + (direction === 'right' ? 'Kanan' : 'Kiri');
+        icon = direction === 'right' ? '↪️' : '↩️';
+    }
+    
+    // Hitung persentase kedekatan (100% = menghadap kiblat, 0% = 180 derajat)
+    const percentage = Math.max(0, Math.min(100, ((180 - absDiff) / 180) * 100));
+    
+    return {
+        direction,
+        text,
+        icon,
+        severity,
+        percentage: Math.round(percentage),
+        absDifference: Math.round(absDiff * 10) / 10
+    };
 }
 
 /**
@@ -206,51 +235,48 @@ export function isFacingQibla(angleDifference, threshold = 3) {
  * @returns {object} Object berisi semua informasi kiblat
  */
 export function calculateQiblaData(userLat, userLon, deviceHeading) {
-    // Default result
     const result = {
         qiblaBearing: null,
         distance: null,
         angleDifference: null,
         arrowRotation: null,
         isFacingQibla: false,
+        guidance: null,  // 🆕 Tambahan
         isValid: false,
     };
 
-    // Validasi input
     if (userLat === null || userLon === null ||
         isNaN(userLat) || isNaN(userLon)) {
         console.warn('⚠️ calculateQiblaData: Posisi user tidak valid');
         return result;
     }
 
-    // Hitung bearing kiblat
     const qiblaBearing = getQiblaBearing(userLat, userLon);
     if (qiblaBearing === null) {
         console.error('❌ Gagal menghitung bearing kiblat');
         return result;
     }
 
-    // Hitung jarak
     const distance = getDistanceToKaabah(userLat, userLon);
 
-    // Default: heading null
     let angleDifference = null;
     let arrowRotation = 0;
     let facingQibla = false;
+    let guidance = getDirectionGuidance(null);
 
-    // Jika heading tersedia, hitung selisih dan rotasi
     if (deviceHeading !== null && !isNaN(deviceHeading)) {
         angleDifference = getQiblaAngleDifference(deviceHeading, qiblaBearing);
         arrowRotation = getArrowRotation(deviceHeading, qiblaBearing);
         facingQibla = isFacingQibla(angleDifference);
+        guidance = getDirectionGuidance(angleDifference);  // 🆕
     }
 
-    // Populate result
     result.qiblaBearing = qiblaBearing;
     result.distance = distance;
     result.angleDifference = angleDifference;
     result.arrowRotation = arrowRotation;
     result.isFacingQibla = facingQibla;
+    result.guidance = guidance;  // 🆕
     result.isValid = true;
 
     return result;
@@ -276,6 +302,7 @@ export function formatQiblaDataForUI(qiblaData) {
             ? qiblaData.arrowRotation
             : 0,
         isFacingQibla: qiblaData.isFacingQibla,
+        guidance: qiblaData.guidance,  // 🆕
         isValid: qiblaData.isValid,
     };
 }
