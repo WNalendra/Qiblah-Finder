@@ -1,8 +1,9 @@
 // ============================================================
 // COMPASS.JS - Modul Sensor Kompas (Device Orientation API)
+// Revisi Final
 // ============================================================
 
-import { normalizeAngle, showToast } from './utils.js';
+import { normalizeAngle, lerpAngle, showToast } from './utils.js';
 
 // State internal modul
 let currentHeading = null;
@@ -13,12 +14,10 @@ let rawBeta = null;
 let rawGamma = null;
 let webkitCompassHeading = null;
 
-// Konfigurasi
+// Konfigurasi smoothing
 const COMPASS_CONFIG = {
-    // Filter simple moving average untuk menghaluskan heading
-    smoothingFactor: 0.3,
-    // Jumlah sampel untuk moving average
-    sampleSize: 5,
+    smoothingFactor: 0.25,    // Faktor interpolasi (0-1)
+    sampleSize: 8,            // Jumlah sampel moving average
 };
 
 // Array untuk menyimpan sampel heading
@@ -33,7 +32,7 @@ export function isDeviceOrientationSupported() {
 }
 
 /**
- * Mengecek apakah iOS (memerlukan permission request)
+ * Mengecek apakah ini perangkat iOS
  * @returns {boolean}
  */
 function isIOS() {
@@ -46,16 +45,14 @@ function isIOS() {
  * @returns {Promise<boolean>} Apakah permission diberikan
  */
 export async function requestOrientationPermission() {
-    // Hanya iOS 13+ yang memerlukan permission eksplisit
     if (typeof DeviceOrientationEvent !== 'undefined') {
-        // Cek apakah method requestPermission ada (iOS 13+)
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             try {
                 const permissionState = await DeviceOrientationEvent.requestPermission();
 
                 if (permissionState === 'granted') {
                     console.log('✅ Permission sensor diberikan');
-                    showToast('Sensor kompas diaktifkan', 'success', 3000);
+                    showToast('Sensor kompas diaktifkan!', 'success', 3000);
                     return true;
                 } else {
                     console.warn('❌ Permission sensor ditolak');
@@ -71,7 +68,6 @@ export async function requestOrientationPermission() {
             }
         } else {
             // Android atau iOS < 13: tidak perlu permission eksplisit
-            console.log('ℹ️ Device tidak memerlukan permission eksplisit');
             return true;
         }
     }
@@ -84,7 +80,6 @@ export async function requestOrientationPermission() {
  * @returns {Promise<boolean>} Apakah sensor berhasil diaktifkan
  */
 export async function startCompass() {
-    // Cek dukungan
     if (!isDeviceOrientationSupported()) {
         console.error('❌ Device Orientation tidak didukung');
         showToast('Sensor kompas tidak tersedia di perangkat ini', 'danger', 6000);
@@ -93,16 +88,15 @@ export async function startCompass() {
         return false;
     }
 
-    // Untuk iOS, permission harus diminta via user gesture
-    // Kita akan menampilkan tombol/tooltip untuk user
+    // Untuk iOS 13+, permission harus diminta via user gesture
     if (isIOS() && typeof DeviceOrientationEvent.requestPermission === 'function') {
-        console.log('ℹ️ iOS terdeteksi, menunggu permission...');
+        console.log('ℹ️ iOS terdeteksi, menunggu permission dari user...');
         updateCompassUIStatus('waiting_permission');
         showPermissionPrompt(true);
-        return false; // Menunggu user memberikan permission
+        return false;
     }
 
-    // Android: langsung pasang event listener
+    // Android / iOS < 13: langsung pasang event listener
     attachOrientationListener();
     isSensorActive = true;
     updateCompassUIStatus('active');
@@ -116,7 +110,11 @@ export async function startCompass() {
  */
 function attachOrientationListener() {
     window.addEventListener('deviceorientation', handleOrientation, true);
-    window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation, true);
+
+    // Beberapa browser mendukung event absolut
+    if ('ondeviceorientationabsolute' in window) {
+        window.addEventListener('deviceorientationabsolute', handleAbsoluteOrientation, true);
+    }
 }
 
 /**
@@ -124,26 +122,22 @@ function attachOrientationListener() {
  */
 function handleOrientation(event) {
     // Simpan data mentah
-    rawAlpha = event.alpha;   // 0-360, rotasi sekitar sumbu Z
-    rawBeta = event.beta;     // -180-180, rotasi sekitar sumbu X
-    rawGamma = event.gamma;   // -90-90, rotasi sekitar sumbu Y
+    rawAlpha = event.alpha;
+    rawBeta = event.beta;
+    rawGamma = event.gamma;
 
-    // Cek apakah ada webkitCompassHeading (iOS lama)
-    if (event.webkitCompassHeading !== undefined) {
+    // Cek webkitCompassHeading (iOS lama)
+    if (event.webkitCompassHeading !== undefined && event.webkitCompassHeading !== null) {
         webkitCompassHeading = event.webkitCompassHeading;
         updateHeading(webkitCompassHeading);
         return;
     }
 
-    // Untuk Android: gunakan alpha (sudah absolut terhadap utara magnetik)
-    // event.absolute === true jika menggunakan sensor absolut
-    if (event.absolute === true && rawAlpha !== null) {
-        // alpha pada Android biasanya sudah kompas heading
-        // 0 = utara, 90 = timur, 180 = selatan, 270 = barat
-        let heading = normalizeAngle(360 - rawAlpha); // Konversi ke heading geografis
-        updateHeading(heading);
-    } else if (rawAlpha !== null) {
-        // Fallback: gunakan alpha meskipun tidak absolut
+    // Gunakan alpha jika tersedia
+    if (rawAlpha !== null && !isNaN(rawAlpha)) {
+        // Konversi alpha ke heading geografis
+        // alpha: 0-360, 0 = arah layar atas
+        // heading: 0 = Utara, 90 = Timur
         let heading = normalizeAngle(360 - rawAlpha);
         updateHeading(heading);
     }
@@ -153,14 +147,14 @@ function handleOrientation(event) {
  * Handler untuk event deviceorientationabsolute (lebih akurat)
  */
 function handleAbsoluteOrientation(event) {
-    if (event.absolute === true && event.alpha !== null) {
+    if (event.absolute === true && event.alpha !== null && !isNaN(event.alpha)) {
         let heading = normalizeAngle(360 - event.alpha);
         updateHeading(heading);
     }
 }
 
 /**
- * Update heading dengan smoothing
+ * Update heading dengan smoothing dan moving average
  * @param {number} newHeading - Heading baru dari sensor
  */
 function updateHeading(newHeading) {
@@ -173,24 +167,19 @@ function updateHeading(newHeading) {
 
     // Tambahkan ke sampel
     headingSamples.push(newHeading);
-
-    // Batasi jumlah sampel
     if (headingSamples.length > COMPASS_CONFIG.sampleSize) {
         headingSamples.shift();
     }
 
-    // Hitung rata-rata sederhana untuk smoothing
-    let smoothedHeading = calculateSmoothedHeading();
+    // Hitung rata-rata vektor untuk menghindari masalah wrap-around
+    const smoothedHeading = calculateVectorAverage(headingSamples);
 
-    // Interpolasi dengan heading sebelumnya (lebih halus)
+    // Interpolasi dengan heading sebelumnya untuk animasi lebih halus
     if (currentHeading !== null) {
-        // Gunakan lerpAngle dari utils (kita implementasikan di sini untuk mengurangi dependency)
-        const diff = shortestAngleDifferenceLocal(currentHeading, smoothedHeading);
-        smoothedHeading = normalizeAngle(currentHeading + diff * COMPASS_CONFIG.smoothingFactor);
+        currentHeading = lerpAngle(currentHeading, smoothedHeading, COMPASS_CONFIG.smoothingFactor);
+    } else {
+        currentHeading = smoothedHeading;
     }
-
-    // Update heading
-    currentHeading = smoothedHeading;
 
     // Panggil semua callback yang terdaftar
     notifyCallbacks(currentHeading);
@@ -200,34 +189,24 @@ function updateHeading(newHeading) {
 }
 
 /**
- * Menghitung smoothed heading dari sampel
+ * Menghitung rata-rata vektor dari sampel sudut
+ * Menghindari masalah wrap-around 360°/0°
  */
-function calculateSmoothedHeading() {
-    if (headingSamples.length === 0) return currentHeading || 0;
+function calculateVectorAverage(samples) {
+    if (samples.length === 0) return currentHeading || 0;
+    if (samples.length === 1) return samples[0];
 
-    // Karena sudut wrap-around, kita tidak bisa rata-rata langsung
-    // Gunakan rata-rata vektor (konversi ke sin/cos)
     let sumSin = 0;
     let sumCos = 0;
 
-    for (const sample of headingSamples) {
+    for (const sample of samples) {
         const rad = sample * (Math.PI / 180);
         sumSin += Math.sin(rad);
         sumCos += Math.cos(rad);
     }
 
-    const avgRad = Math.atan2(sumSin / headingSamples.length, sumCos / headingSamples.length);
+    const avgRad = Math.atan2(sumSin / samples.length, sumCos / samples.length);
     return normalizeAngle(avgRad * (180 / Math.PI));
-}
-
-/**
- * Menghitung selisih sudut terpendek (versi lokal)
- */
-function shortestAngleDifferenceLocal(angle1, angle2) {
-    let diff = normalizeAngle(angle2) - normalizeAngle(angle1);
-    if (diff > 180) diff -= 360;
-    if (diff < -180) diff += 360;
-    return diff;
 }
 
 /**
@@ -242,6 +221,15 @@ export function onHeadingUpdate(callback) {
     }
 
     headingCallbacks.push(callback);
+
+    // Jika sensor sudah aktif dan heading tersedia, langsung panggil callback
+    if (isSensorActive && currentHeading !== null) {
+        try {
+            callback(currentHeading);
+        } catch (error) {
+            console.error('Error di heading callback:', error);
+        }
+    }
 
     // Return fungsi untuk unregister
     return () => {
@@ -264,7 +252,7 @@ function notifyCallbacks(heading) {
 
 /**
  * Mendapatkan heading saat ini
- * @returns {number|null} Heading dalam derajat (0-360) atau null
+ * @returns {number|null}
  */
 export function getCurrentHeading() {
     return currentHeading;
@@ -291,12 +279,11 @@ export function stopCompass() {
 }
 
 /**
- * Reset heading (untuk kalibrasi)
+ * Reset heading samples (untuk kalibrasi)
  */
 export function resetHeading() {
     headingSamples = [];
-    // currentHeading tetap dipertahankan agar animasi tidak lompat
-    console.log('🔄 Heading direset');
+    console.log('🔄 Heading samples direset');
 }
 
 // ============================================================
@@ -312,7 +299,6 @@ function updateHeadingDisplay(heading) {
         display.textContent = `${Math.round(heading)}°`;
     }
 
-    // Update di card informasi kiblat
     const infoHeading = document.getElementById('infoDeviceHeading');
     if (infoHeading) {
         infoHeading.textContent = `${heading.toFixed(1)}°`;
@@ -324,32 +310,18 @@ function updateHeadingDisplay(heading) {
  */
 function updateCompassUIStatus(status) {
     const badge = document.getElementById('infoCompassStatus');
-
     if (!badge) return;
 
-    switch (status) {
-        case 'active':
-            badge.innerHTML = '<span class="badge bg-success">Aktif</span>';
-            break;
-        case 'waiting_permission':
-            badge.innerHTML = '<span class="badge bg-warning">Butuh Izin</span>';
-            break;
-        case 'denied':
-            badge.innerHTML = '<span class="badge bg-danger">Izin Ditolak</span>';
-            break;
-        case 'unsupported':
-            badge.innerHTML = '<span class="badge bg-danger">Tidak Didukung</span>';
-            break;
-        case 'error':
-            badge.innerHTML = '<span class="badge bg-danger">Error</span>';
-            break;
-        case 'stopped':
-            badge.innerHTML = '<span class="badge bg-secondary">Nonaktif</span>';
-            break;
-        default:
-            badge.innerHTML = '<span class="badge bg-secondary">Menunggu...</span>';
-            break;
-    }
+    const statusMap = {
+        'active': '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Aktif</span>',
+        'waiting_permission': '<span class="badge bg-warning"><i class="bi bi-unlock me-1"></i>Butuh Izin</span>',
+        'denied': '<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Izin Ditolak</span>',
+        'unsupported': '<span class="badge bg-danger"><i class="bi bi-exclamation-circle me-1"></i>Tidak Didukung</span>',
+        'error': '<span class="badge bg-danger"><i class="bi bi-bug me-1"></i>Error</span>',
+        'stopped': '<span class="badge bg-secondary"><i class="bi bi-stop-circle me-1"></i>Nonaktif</span>',
+    };
+
+    badge.innerHTML = statusMap[status] || '<span class="badge bg-secondary">Menunggu...</span>';
 }
 
 /**
@@ -367,23 +339,22 @@ function showSensorAlert(show) {
 }
 
 /**
- * Tampilkan/sembunyikan prompt permission (untuk iOS)
+ * Tampilkan prompt permission di tombol kalibrasi (untuk iOS)
  */
 function showPermissionPrompt(show) {
     const btnCalibrate = document.getElementById('btnCalibrate');
+    if (!btnCalibrate) return;
 
-    if (btnCalibrate) {
-        if (show) {
-            btnCalibrate.textContent = '🔓 Izinkan Sensor';
-            btnCalibrate.classList.remove('btn-outline-primary');
-            btnCalibrate.classList.add('btn-warning');
-            btnCalibrate.disabled = false;
-            btnCalibrate.style.display = 'inline-block';
-        } else {
-            btnCalibrate.textContent = '🔄 Kalibrasi';
-            btnCalibrate.classList.remove('btn-warning');
-            btnCalibrate.classList.add('btn-outline-primary');
-        }
+    if (show) {
+        btnCalibrate.innerHTML = '<i class="bi bi-unlock me-1"></i> Izinkan Sensor';
+        btnCalibrate.classList.remove('btn-outline-primary');
+        btnCalibrate.classList.add('btn-warning');
+        btnCalibrate.disabled = false;
+        btnCalibrate.style.display = 'inline-block';
+    } else {
+        btnCalibrate.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Kalibrasi Kompas';
+        btnCalibrate.classList.remove('btn-warning');
+        btnCalibrate.classList.add('btn-outline-primary');
     }
 }
 
@@ -407,6 +378,7 @@ export function showCompassLoading(show) {
             container.classList.add('d-none');
         } else {
             container.classList.remove('d-none');
+            container.classList.add('fade-in');
         }
     }
 }
