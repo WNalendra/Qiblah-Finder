@@ -237,7 +237,10 @@ export function stopCompass() {
  * - Browser lain: Menggunakan event.alpha (0-360, tapi mungkin berbeda orientasi)
  *
  * @param {DeviceOrientationEvent} event - Event orientasi dari browser
- * @param {boolean} isAbsolute - Apakah event berasal dari orientasi absolut
+ * @param {boolean} isAbsolute - Apakah event berasal dari orientasi absolut.
+ *   Dipertahankan di signature untuk kejelasan pemanggil dan kemungkinan
+ *   kebutuhan lain di masa depan; arah konversi alpha saat ini sama untuk
+ *   kedua jenis event (lihat catatan di bawah).
  * @returns {number|null} Heading dalam derajat (0-359.99) atau null jika tidak tersedia
  */
 function extractHeading(event, isAbsolute = false) {
@@ -253,15 +256,11 @@ function extractHeading(event, isAbsolute = false) {
   }
 
   // Prioritas 2: event.alpha (standar W3C)
-  // Catatan: Menurut spesifikasi W3C DeviceOrientation, alpha SELALU
-  // bertambah berlawanan arah jarum jam (counter-clockwise), baik pada
-  // event 'deviceorientation' biasa maupun 'deviceorientationabsolute'.
-  // Yang membedakan keduanya hanyalah titik referensi 0°-nya (apakah
-  // benar-benar Utara sejati atau posisi awal perangkat), BUKAN arah
-  // putarannya. Karena heading kompas (0=Utara, 90=Timur, 180=Selatan,
-  // 270=Barat) bertambah SEARAH jarum jam, konversi (360 - alpha) harus
-  // selalu dilakukan pada kedua kasus, absolut maupun standar.
-  // Referensi: https://www.w3.org/TR/orientation-event/
+  // Catatan: alpha dihitung berlawanan arah jarum jam terhadap sumbu Z,
+  // baik pada event standar (relatif orientasi awal perangkat) maupun
+  // pada event absolut (relatif Utara sejati). Karena arah kompas
+  // bertambah SEARAH jarum jam, alpha perlu dibalik (360 - alpha) pada
+  // kedua jenis event agar menghasilkan heading yang benar.
   if (event.alpha != null && !isNaN(event.alpha)) {
     return normalizeHeading(360 - event.alpha);
   }
