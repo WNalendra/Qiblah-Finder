@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover"
+    />
+    <title>Kiblat Finder • Arah Kiblat Akurat</title>
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <!-- Google Font Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Container Utama: Pusat Horizontal & Vertikal -->
+    <main class="main-container">
+      <!-- Card Glassmorphism Utama -->
+      <div class="kiblat-card" id="mainCard">
+        <!-- ==================== HEADER ==================== -->
+        <header class="card-header">
+          <div class="logo-compass">
+            <i class="fas fa-compass" aria-hidden="true"></i>
+          </div>
+          <h1 class="app-title">Kiblat Finder</h1>
+          <p class="app-subtitle">
+            Temukan arah kiblat secara akurat menggunakan lokasi dan sensor
+            perangkat.
+          </p>
+        </header>
+
+        <!-- ==================== BAGIAN LOKASI ==================== -->
+        <section class="location-section" aria-label="Lokasi Anda">
+          <div class="location-card glass-inner">
+            <div class="location-icon">
+              <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            </div>
+            <div class="location-text">
+              <span class="location-label">Lokasi Anda</span>
+              <span class="location-placeholder" id="locationPlaceholder"
+                >Mendeteksi lokasi...</span
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== KOMPAS ==================== -->
+        <section class="compass-section" aria-label="Visual Kompas Kiblat">
+          <div class="compass-container" id="compassContainer">
+            <!-- Lingkaran luar kompas -->
+            <div class="compass-outer-ring">
+              <!-- Penanda arah mata angin -->
+              <span class="direction north">N</span>
+              <span class="direction east">E</span>
+              <span class="direction south">S</span>
+              <span class="direction west">W</span>
+
+              <!-- Panah kiblat (emas) akan diputar via JS, beri id penting) -->
+              <div class="kiblat-arrow" id="kiblatArrow">
+                <i class="fas fa-location-arrow" aria-hidden="true"></i>
+              </div>
+
+              <!-- Titik pusat -->
+              <div class="compass-center-dot"></div>
+            </div>
+          </div>
+          <div class="compass-info">
+            <span class="compass-label">Arah Kiblat</span>
+            <span class="compass-degree" id="kiblatDegree">0°</span>
+          </div>
+        </section>
+
+        <!-- ==================== STATUS SENSOR ==================== -->
+        <section class="status-section" aria-label="Status Sensor">
+          <div class="status-card glass-inner">
+            <div class="status-content">
+              <span class="status-label">Status Sensor</span>
+              <span class="status-badge ready" id="sensorBadge">
+                <span class="badge-dot"></span> Siap
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== TOMBOL UTAMA ==================== -->
+        <div class="action-button-wrapper">
+          <button class="btn-allow-location" id="allowLocationBtn">
+            <i class="fas fa-location-crosshairs" aria-hidden="true"></i>
+            Izinkan Lokasi
+          </button>
+        </div>
+
+        <!-- ==================== INFORMASI TAMBAHAN (LAT/LONG) ==================== -->
+        <section class="coordinate-section" aria-label="Koordinat">
+          <div class="coord-row">
+            <div class="coord-card glass-inner">
+              <span class="coord-label">Latitude</span>
+              <span class="coord-value" id="latitudeValue">-</span>
+            </div>
+            <div class="coord-card glass-inner">
+              <span class="coord-label">Longitude</span>
+              <span class="coord-value" id="longitudeValue">-</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== FOOTER ==================== -->
+        <footer class="card-footer">
+          <p class="footer-text">Kiblat Finder © 2026</p>
+        </footer>
+      </div>
+    </main>
+
+    <script src="js/qibla.js"></script>
+    <script src="js/compass.js"></script>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

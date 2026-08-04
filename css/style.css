@@ -1,0 +1,544 @@
+/* ==================== CSS VARIABLES ==================== */
+:root {
+  --emerald: #0f766e;
+  --emerald-dark: #0b5d56;
+  --emerald-deeper: #094b45;
+  --white: #ffffff;
+  --light-gray: #f3f4f6;
+  --medium-gray: #9ca3af;
+  --dark-gray: #4b5563;
+  --gold: #d4af37;
+  --gold-light: #e6c960;
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-shadow:
+    0 25px 45px rgba(0, 0, 0, 0.08), 0 10px 20px rgba(0, 0, 0, 0.05);
+  --inner-glass-bg: rgba(255, 255, 255, 0.35);
+  --inner-glass-border: rgba(255, 255, 255, 0.5);
+  --border-radius-xl: 28px;
+  --border-radius-lg: 22px;
+  --border-radius-md: 16px;
+  --border-radius-sm: 12px;
+  --transition-smooth: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --font-poppins: "Poppins", sans-serif;
+}
+
+/* ==================== RESET & BASE ==================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-poppins);
+  background: linear-gradient(145deg, #0a5e56 0%, #0f766e 35%, #0b6b63 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  margin: 0;
+  color: #1f2937;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==================== MAIN CONTAINER ==================== */
+.main-container {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* Animasi Fade In */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==================== CARD UTAMA (GLASSMORPHISM) ==================== */
+.kiblat-card {
+  width: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--glass-shadow);
+  padding: 28px 24px 20px;
+  transition: var(--transition-smooth);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: floatCard 6s infinite ease-in-out;
+}
+
+/* Efek hover card (sedikit mengangkat) */
+.kiblat-card:hover {
+  box-shadow:
+    0 30px 50px rgba(0, 0, 0, 0.12),
+    0 15px 25px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Animasi floating halus pada card */
+@keyframes floatCard {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* ==================== HEADER ==================== */
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.logo-compass {
+  font-size: 2.8rem;
+  color: var(--gold);
+  filter: drop-shadow(0 8px 12px rgba(212, 175, 55, 0.3));
+  margin-bottom: 4px;
+  animation: softPulse 3s infinite;
+}
+
+@keyframes softPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+}
+
+.app-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.5px;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  line-height: 1.2;
+}
+
+.app-subtitle {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* ==================== GLASS INNER (CARD KECIL) ==================== */
+.glass-inner {
+  background: var(--inner-glass-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--inner-glass-border);
+  border-radius: var(--border-radius-md);
+  padding: 14px 18px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+  transition: var(--transition-smooth);
+}
+
+.glass-inner:hover {
+  background: rgba(255, 255, 255, 0.45);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* ==================== BAGIAN LOKASI ==================== */
+.location-section {
+  width: 100%;
+}
+
+.location-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.location-icon {
+  font-size: 1.6rem;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(212, 175, 55, 0.12);
+  border-radius: 50%;
+}
+
+.location-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.location-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--white);
+  opacity: 0.9;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.location-placeholder {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--white);
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+/* ==================== KOMPAS ==================== */
+.compass-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin: 6px 0 4px;
+}
+
+.compass-container {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.compass-outer-ring {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.2),
+    inset 0 2px 8px rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: compassFloat 5s infinite ease-in-out;
+}
+
+/* Animasi floating kompas */
+@keyframes compassFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Arah mata angin */
+.direction {
+  position: absolute;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--white);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  opacity: 0.95;
+}
+
+.north {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.east {
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.south {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.west {
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Panah Kiblat (emas) */
+.kiblat-arrow {
+  position: absolute;
+  width: 6px;
+  height: 55px;
+  color: var(--gold);
+  font-size: 2.3rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  transform-origin: bottom center;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 0%) rotate(0deg);
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1);
+  filter: drop-shadow(0 6px 10px rgba(212, 175, 55, 0.7));
+  pointer-events: none;
+}
+
+.kiblat-arrow i {
+  transform: rotate(45deg);
+  font-size: 2rem;
+  margin-top: -6px;
+}
+
+/* Titik pusat */
+.compass-center-dot {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.9);
+  border: 2px solid white;
+  z-index: 3;
+}
+
+.compass-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.compass-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.4px;
+}
+
+.compass-degree {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--white);
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ==================== STATUS SENSOR ==================== */
+.status-section {
+  width: 100%;
+}
+
+.status-card .status-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--white);
+  opacity: 0.85;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f766e;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 30px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(15, 118, 110, 0.7);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.4px;
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  background: #a7f3d0;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 8px #6ee7b7;
+}
+
+/* ==================== TOMBOL IZINKAN LOKASI ==================== */
+.action-button-wrapper {
+  width: 100%;
+  margin: 2px 0 4px;
+}
+
+.btn-allow-location {
+  width: 100%;
+  background: var(--emerald);
+  border: none;
+  color: white;
+  font-family: var(--font-poppins);
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 16px 20px;
+  border-radius: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(15, 118, 110, 0.4);
+  transition: var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  background: rgba(15, 118, 110, 0.85);
+}
+
+.btn-allow-location:hover {
+  background: var(--emerald-dark);
+  box-shadow: 0 16px 28px rgba(15, 118, 110, 0.55);
+  transform: scale(1.02);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Efek ripple sederhana CSS */
+.btn-allow-location::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.5s ease,
+    height 0.5s ease;
+}
+
+.btn-allow-location:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-allow-location i {
+  font-size: 1.2rem;
+}
+
+/* ==================== KOORDINAT (LAT / LONG) ==================== */
+.coordinate-section {
+  width: 100%;
+}
+
+.coord-row {
+  display: flex;
+  gap: 14px;
+}
+
+.coord-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 14px 8px;
+}
+
+.coord-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--white);
+  opacity: 0.8;
+}
+
+.coord-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: white;
+  word-break: break-word;
+}
+
+/* ==================== FOOTER ==================== */
+.card-footer {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  text-align: center;
+}
+
+.footer-text {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+/* ==================== RESPONSIVE TWEAKS ==================== */
+@media (max-width: 480px) {
+  .kiblat-card {
+    padding: 24px 18px 18px;
+    gap: 20px;
+  }
+
+  .app-title {
+    font-size: 1.8rem;
+  }
+
+  .compass-container {
+    width: 160px;
+    height: 160px;
+  }
+
+  .coord-row {
+    gap: 10px;
+  }
+}
+
+@media (min-width: 768px) {
+  .main-container {
+    max-width: 420px;
+  }
+}
